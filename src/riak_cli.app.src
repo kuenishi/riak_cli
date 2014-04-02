@@ -1,7 +1,7 @@
 {application, riak_cli,
  [
-  {description, ""},
-  {vsn, "1"},
+  {description, "riak cli written in Erlang/OTP"},
+  {vsn, "0.0.1"},
   {registered, []},
   {applications, [
                   kernel,
