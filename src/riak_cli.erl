@@ -28,7 +28,14 @@ main(Args) ->
             Bucket0 = proplists:get_value(bucket, Options),
             Bucket = {list_to_binary(Type),
                       list_to_binary(Bucket0)},
-            run(Host, Port, fun riak_cli_cmd:drop_bucket/2, [Bucket])
+            run(Host, Port, fun riak_cli_cmd:drop_bucket/2, [Bucket]);
+        "get" ->
+            Type = proplists:get_value(type, Options),
+            Bucket0 = proplists:get_value(bucket, Options),
+            Key = proplists:get_value(key, Options),
+            Bucket = {list_to_binary(Type),
+                      list_to_binary(Bucket0)},
+            run(Host, Port, fun riak_cli_cmd:get/3, [Bucket, Key])    
     end.
 
 run(Host, Port, Fun, Args) ->
@@ -51,5 +58,6 @@ option_spec_list() ->
      {port, $p, "port", {integer, 65536}, "port number of riak"},
 
      {type, $t, "type", string, "specify bucket type"},
-     {bucket, $b, "bucket", string, "specify bucket"}
+     {bucket, $b, "bucket", string, "specify bucket"},
+     {key, $k, "key", string, "specify key"}
     ].

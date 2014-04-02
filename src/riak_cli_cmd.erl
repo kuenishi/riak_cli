@@ -1,7 +1,7 @@
 -module(riak_cli_cmd).
 
--export([drop_bucket/2]).
- 
+-export([drop_bucket/2, get/3]).
+
 drop_bucket(Client, Bucket0) ->
     {ok, ReqId} = riakc_pb_socket:stream_list_keys(Client, Bucket0),
     fold_drop_bucket(Client, Bucket0, ReqId, 0).
@@ -39,6 +39,9 @@ pmap(Fun, List) ->
                            Self ! done
                    end) || Elem <- List ],
     [ receive done -> ok end || _Pid <- Pids ].
-               
 
-                            
+
+
+get(Client, Bucket, Key) ->
+    {ok, RiakObj} = riakc_pb_socket:get(Client, Bucket, Key),
+    io:format("~p", [RiakObj]).
