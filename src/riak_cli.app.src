@@ -1,0 +1,12 @@
+{application, riak_cli,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { riak_cli_app, []}},
+  {env, []}
+ ]}.
