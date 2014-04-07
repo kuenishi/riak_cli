@@ -29,6 +29,11 @@ main(Args) ->
             Bucket = {list_to_binary(Type),
                       list_to_binary(Bucket0)},
             run(Host, Port, fun riak_cli_cmd:drop_bucket/2, [Bucket]);
+        "listbuckets" ->
+            Type = proplists:get_value(type, Options),
+            run(Host, Port, fun riak_cli_cmd:list_buckets/2,
+                [list_to_binary(Type)]);
+            
         "get" ->
             Type = proplists:get_value(type, Options),
             Bucket0 = proplists:get_value(bucket, Options),
@@ -53,7 +58,7 @@ usage(OptSpecList) ->
 
 option_spec_list() ->
     [{help, $h, "help", undefined, "show the program options"},
-     {command, $c, "command", string, "command: drop|... "},
+     {command, $c, "command", string, "command: drop|listbuckets|get"},
      {node, $n, "node", string, "node name of erlang node"},
      {port, $p, "port", {integer, 65536}, "port number of riak"},
 
