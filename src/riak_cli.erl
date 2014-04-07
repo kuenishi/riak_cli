@@ -24,24 +24,28 @@ main(Args) ->
 
     case Cmd of
         "drop" ->
-            Type = proplists:get_value(type, Options),
-            Bucket0 = proplists:get_value(bucket, Options),
-            Bucket = {list_to_binary(Type),
-                      list_to_binary(Bucket0)},
+            Bucket = build_bt(Options),
             run(Host, Port, fun riak_cli_cmd:drop_bucket/2, [Bucket]);
         "listbuckets" ->
             Type = proplists:get_value(type, Options),
             run(Host, Port, fun riak_cli_cmd:list_buckets/2,
                 [list_to_binary(Type)]);
-            
+        "listkeys" ->
+            Bucket = build_bt(Options),
+            run(Host, Port, fun riak_cli_cmd:list_keys/2, [Bucket]);
+
         "get" ->
-            Type = proplists:get_value(type, Options),
-            Bucket0 = proplists:get_value(bucket, Options),
+            Bucket = build_bt(Options),
             Key = proplists:get_value(key, Options),
-            Bucket = {list_to_binary(Type),
-                      list_to_binary(Bucket0)},
-            run(Host, Port, fun riak_cli_cmd:get/3, [Bucket, Key])    
+            run(Host, Port, fun riak_cli_cmd:get/3,
+                [Bucket, list_to_binary(Key)])
     end.
+
+build_bt(Options) ->
+    Type = proplists:get_value(type, Options),
+    Bucket0 = proplists:get_value(bucket, Options),
+    _Bucket = {list_to_binary(Type),
+               list_to_binary(Bucket0)}.
 
 run(Host, Port, Fun, Args) ->
     {ok, Client} = riakc_pb_socket:start_link(Host, Port),
@@ -58,7 +62,7 @@ usage(OptSpecList) ->
 
 option_spec_list() ->
     [{help, $h, "help", undefined, "show the program options"},
-     {command, $c, "command", string, "command: drop|listbuckets|get"},
+     {command, $c, "command", string, "command: drop|listbuckets|listkeys|get"},
      {node, $n, "node", string, "node name of erlang node"},
      {port, $p, "port", {integer, 65536}, "port number of riak"},
 

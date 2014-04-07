@@ -1,6 +1,8 @@
 -module(riak_cli_cmd).
 
--export([drop_bucket/2, list_buckets/2, get/3]).
+-export([drop_bucket/2,
+         list_buckets/2, list_keys/2,
+         get/3]).
 
 drop_bucket(Client, Bucket0) ->
     {ok, ReqId} = riakc_pb_socket:stream_list_keys(Client, Bucket0),
@@ -46,6 +48,12 @@ list_buckets(Client, Type) when is_binary(Type) ->
     lists:foreach(fun(Bucket) ->
                           io:format("~s~n", [Bucket])
                   end, Buckets).
+
+list_keys(Client, Bucket) ->
+    {ok, Keys} = riakc_pb_socket:list_keys(Client, Bucket),
+    lists:foreach(fun(Key) ->
+                          io:format("~s~n", [Key])
+                  end, Keys).
 
 get(Client, Bucket, Key) ->
     {ok, RiakObj} = riakc_pb_socket:get(Client, Bucket, Key),
