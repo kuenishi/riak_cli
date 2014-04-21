@@ -1,7 +1,10 @@
 -module(riak_cli_cmd).
 
+-include_lib("riak_pb/include/riak_pb_kv_codec.hrl").
+
 -export([drop_bucket/2,
          list_buckets/2, list_keys/2,
+         cleanup/2,
          get/3]).
 
 drop_bucket(Client, Bucket0) ->
@@ -54,6 +57,62 @@ list_keys(Client, Bucket) ->
     lists:foreach(fun(Key) ->
                           io:format("~s~n", [Key])
                   end, Keys).
+
+cleanup(Client, Bucket) ->
+    {ok, ReqId} = riakc_pb_socket:stream_list_keys(Client, Bucket),
+    fold_cleanup_bucket(Client, Bucket, ReqId, 0).
+
+fold_cleanup_bucket(Client, Bucket, ReqId, Count) ->
+    receive
+        {ReqId, done} ->
+            io:format("~n"),
+            ok;
+        {ReqId, {error, Reason}} ->
+            io:format("error ~p~n", [Reason]),
+            {error, Reason};
+        {ReqId, {_, Keys}} ->
+            cleanup_all(Client, Bucket, Keys),
+            Count1 = Count + length(Keys),
+            io:format("deleted ~p keys\r", [Count1]),
+            %% don't spawn: we have to wait for the process finishx
+            %% spawn(fun() -> delete_all(Client, Keys) end),
+            fold_cleanup_bucket(Client, Bucket, ReqId, Count1)
+    end.
+
+cleanup_all(Client, Bucket, Keys) ->
+    Cleanup =
+        fun(Key) ->
+                {ok, RiakObj} = riakc_pb_socket:get(Client, Bucket, Key),
+                case riakc_obj:value_count(RiakObj) of
+                    1 -> ok;
+                    N when N > 1 ->
+                        handle_siblings(Client, RiakObj)
+                end
+                %% io:format("~p~n", [Key])
+        end,
+    pmap(Cleanup, Keys).
+    %% lists:foreach(Deleter, Keys).
+
+handle_siblings(Client, RiakObj0) ->
+    Contents = riakc_obj:get_contents(RiakObj0),
+    DecodedSiblings = [Content || Content <- Contents,
+                                  not has_tombstone(Content)],
+    case DecodedSiblings of
+        [] ->
+            B = riakc_obj:bucket(RiakObj0),
+            K = riakc_obj:key(RiakObj0),
+            riakc_pb_socket:delete(Client, B, K);
+        [H|_] ->
+            riakc_pb_socket:put(riakc_obj:update_value(RiakObj0, H))
+    end.
+             
+    
+-spec has_tombstone({dict(), binary()}) -> boolean().
+has_tombstone({_, <<>>}) ->
+    true;
+has_tombstone({MD, _V}) ->
+    dict:is_key(?MD_DELETED, MD) =:= true.
+
 
 get(Client, Bucket, Key) ->
     {ok, RiakObj} = riakc_pb_socket:get(Client, Bucket, Key),

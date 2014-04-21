@@ -27,4 +27,3 @@ $ ./riak_cli -n localhost -p 8087 -c listbuckets -t yourbucketype
 ```
 $ ./riak_cli -n localhost -p 8087 -c listkeys -t yourbucketype -b yourbucket
 ```
-

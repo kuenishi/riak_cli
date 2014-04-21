@@ -34,6 +34,11 @@ main(Args) ->
             Bucket = build_bt(Options),
             run(Host, Port, fun riak_cli_cmd:list_keys/2, [Bucket]);
 
+        "cleanup" ->
+            %% removes tombstone, and put it back
+            Bucket = build_bt(Options),
+            run(Host, Port, fun riak_cli_cmd:cleanup/2, [Bucket]);
+
         "get" ->
             Bucket = build_bt(Options),
             Key = proplists:get_value(key, Options),
