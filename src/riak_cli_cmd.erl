@@ -73,7 +73,7 @@ fold_cleanup_bucket(Client, Bucket, ReqId, Count) ->
         {ReqId, {_, Keys}} ->
             cleanup_all(Client, Bucket, Keys),
             Count1 = Count + length(Keys),
-            io:format("deleted ~p keys\r", [Count1]),
+            io:format("cleaned ~p keys\r", [Count1]),
             %% don't spawn: we have to wait for the process finishx
             %% spawn(fun() -> delete_all(Client, Keys) end),
             fold_cleanup_bucket(Client, Bucket, ReqId, Count1)
@@ -97,16 +97,21 @@ handle_siblings(Client, RiakObj0) ->
     Contents = riakc_obj:get_contents(RiakObj0),
     DecodedSiblings = [Content || Content <- Contents,
                                   not has_tombstone(Content)],
+    B = riakc_obj:bucket(RiakObj0),
+    K = riakc_obj:key(RiakObj0),
     case DecodedSiblings of
         [] ->
-            B = riakc_obj:bucket(RiakObj0),
-            K = riakc_obj:key(RiakObj0),
+            io:format("deleting ~p:~s~n", [B, K]),
             riakc_pb_socket:delete(Client, B, K);
-        [H|_] ->
-            riakc_pb_socket:put(riakc_obj:update_value(RiakObj0, H))
+        [{M,V}|_] ->
+            io:format("updating ~p:~s~n", [B, K]),
+            RiakObj1 = riakc_obj:update_value(RiakObj0, V),
+            RiakObj2 = riakc_obj:update_metadata(RiakObj1, M),
+            riakc_pb_socket:put(Client, RiakObj2)
+
     end.
-             
-    
+
+
 -spec has_tombstone({dict(), binary()}) -> boolean().
 has_tombstone({_, <<>>}) ->
     true;
