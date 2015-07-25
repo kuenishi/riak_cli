@@ -18,7 +18,7 @@ main(Args) ->
 
     Cmd = proplists:get_value(command, Options),
     Host = proplists:get_value(node, Options, localhost),
-    Port = proplists:get_value(port, Options, 8098),
+    Port = proplists:get_value(port, Options, 8087),
     io:format("~p: ~p, ~p~n", [Cmd, Options, NonOptArgs]),
     io:format("connecting to ~s:~p~n", [Host, Port]),
 
@@ -68,8 +68,8 @@ usage(OptSpecList) ->
 option_spec_list() ->
     [{help, $h, "help", undefined, "show the program options"},
      {command, $c, "command", string, "command: drop|listbuckets|listkeys|get"},
-     {node, $n, "node", string, "node name of erlang node"},
-     {port, $p, "port", {integer, 65536}, "port number of riak"},
+     {node, $n, "node", {string, "localhost"}, "node name of erlang node"},
+     {port, $p, "port", {integer, 8087}, "port number of riak"},
 
      {type, $t, "type", string, "specify bucket type"},
      {bucket, $b, "bucket", string, "specify bucket"},
