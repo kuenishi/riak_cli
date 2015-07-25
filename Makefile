@@ -1,8 +1,6 @@
-.PHONY: compile get-deps escriptize
+.PHONY: compile get-deps install
 
-all: escriptize
-
-escriptize: riak_cli
+all: riak_cli
 
 riak_cli: compile
 	./rebar escriptize skip_deps=true
@@ -12,3 +10,6 @@ compile: get-deps
 
 get-deps:
 	./rebar get-deps
+
+install:
+	@install riak_cli /usr/local/bin
